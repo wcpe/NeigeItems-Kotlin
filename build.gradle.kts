@@ -31,6 +31,7 @@ taboolib {
             name("PlaceholderAPI").with("bukkit").optional(true)
             name("MythicMobs").with("bukkit").optional(true)
             name("Vault").with("bukkit").optional(true)
+            name("ItemBind").with("bukkit").optional(true)
         }
     }
     install(
@@ -57,6 +58,10 @@ repositories {
     maven("https://jitpack.io")
     // taboo的仓库有时候github自动构建连不上, 丢到最后防止自动构建发生意外
     maven("https://repo.tabooproject.org/storages/public/releases")
+    maven {
+        isAllowInsecureProtocol = true
+        setUrl("http://maven.wcpe.top/repository/maven-public/")
+    }
 }
 
 configurations{
@@ -76,6 +81,9 @@ dependencies {
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     compileOnly("io.izzel.taboolib:platform-bukkit:$taboolib_version")
     compileOnly("org.ow2.asm:asm:9.4")
+
+    compileOnly("top.wcpe:itembind:1.0.4")
+
     taboo("org.javassist:javassist:3.20.0-GA")
     taboo(fileTree("libs/callsite-nbt-1.0-dev-SNAPSHOT-fat.jar"))
     "packShadow"(kotlin("stdlib"))

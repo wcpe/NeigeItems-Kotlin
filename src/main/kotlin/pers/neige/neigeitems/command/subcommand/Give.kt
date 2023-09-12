@@ -14,6 +14,7 @@ import pers.neige.neigeitems.utils.PlayerUtils.giveItems
 import taboolib.common.platform.command.subCommand
 import taboolib.common.platform.function.submit
 import taboolib.module.nms.getItemTag
+import top.wcpe.itembind.ItemBindApi
 
 object Give {
     // ni get [物品ID] (数量) (是否反复随机) (指向数据) > 根据ID获取NI物品
@@ -53,7 +54,14 @@ object Give {
                             arrayListOf("data")
                         }
                         execute<Player> { sender, context, argument ->
-                            giveCommandAsync(sender, sender, context.argument(-3), context.argument(-2), context.argument(-1), argument)
+                            giveCommandAsync(
+                                sender,
+                                sender,
+                                context.argument(-3),
+                                context.argument(-2),
+                                context.argument(-1),
+                                argument
+                            )
                         }
                     }
                 }
@@ -61,7 +69,7 @@ object Give {
         }
     }
 
-    // ni give [玩家ID] [物品ID] (数量) (是否反复随机) (指向数据) > 根据ID给予NI物品
+    // ni give [玩家ID] [物品ID] (数量) (是否反复随机) (指向数据) (绑定玩家) > 根据ID给予NI物品
     val give = subCommand {
         execute<CommandSender> { sender, _, _ ->
             submit(async = true) {
@@ -91,26 +99,64 @@ object Give {
                         arrayListOf("amount")
                     }
                     execute<CommandSender> { sender, context, argument ->
-                        giveCommandAsync(sender, Bukkit.getPlayerExact(context.argument(-2)), context.argument(-1), argument)
+                        giveCommandAsync(
+                            sender,
+                            Bukkit.getPlayerExact(context.argument(-2)),
+                            context.argument(-1),
+                            argument
+                        )
                     }
-                    // ni give [玩家ID] [物品ID] (数量) (是否反复随机)
+                    // ni give [玩家ID] [物品ID] (数量) (是否绑定)
                     dynamic(optional = true) {
                         suggestion<CommandSender>(uncheck = true) { _, _ ->
-                            arrayListOf("true", "false")
+                            Bukkit.getOnlinePlayers().map { it.name }.toMutableList().apply { add(".") }
                         }
                         execute<CommandSender> { sender, context, argument ->
-                            giveCommandAsync(sender, Bukkit.getPlayerExact(context.argument(-3)), context.argument(-2), context.argument(-1), argument)
+                            giveCommandAsync(
+                                sender = sender,
+                                player = Bukkit.getPlayerExact(context.argument(-3)),
+                                id = context.argument(-2),
+                                amount = context.argument(-1),
+                                bindPlayer = argument
+                            )
                         }
-                        // ni give [玩家ID] [物品ID] (数量) (是否反复随机) (指向数据)
+
+                        // ni give [玩家ID] [物品ID] (数量) (是否绑定) (是否反复随机)
                         dynamic(optional = true) {
                             suggestion<CommandSender>(uncheck = true) { _, _ ->
-                                arrayListOf("data")
+                                arrayListOf("true", "false")
                             }
                             execute<CommandSender> { sender, context, argument ->
-                                giveCommandAsync(sender, Bukkit.getPlayerExact(context.argument(-4)), context.argument(-3), context.argument(-2), context.argument(-1), argument)
+                                giveCommandAsync(
+                                    sender,
+                                    Bukkit.getPlayerExact(context.argument(-4)),
+                                    context.argument(-3),
+                                    context.argument(-2),
+                                    context.argument(-1),
+                                    argument
+                                )
+                            }
+                            // ni give [玩家ID] [物品ID] (数量) (是否绑定) (是否反复随机) (指向数据)
+                            dynamic(optional = true) {
+                                suggestion<CommandSender>(uncheck = true) { _, _ ->
+                                    arrayListOf("data")
+                                }
+                                execute<CommandSender> { sender, context, argument ->
+                                    giveCommandAsync(
+                                        sender,
+                                        Bukkit.getPlayerExact(context.argument(-5)),
+                                        context.argument(-4),
+                                        context.argument(-3),
+                                        context.argument(-2),
+                                        context.argument(-1),
+                                        argument
+                                    )
+                                }
                             }
                         }
+
                     }
+
                 }
             }
         }
@@ -153,7 +199,13 @@ object Give {
                             arrayListOf("data")
                         }
                         execute<CommandSender> { sender, context, argument ->
-                            giveAllCommandAsync(sender, context.argument(-3), context.argument(-2), context.argument(-1), argument)
+                            giveAllCommandAsync(
+                                sender,
+                                context.argument(-3),
+                                context.argument(-2),
+                                context.argument(-1),
+                                argument
+                            )
                         }
                     }
                 }
@@ -170,12 +222,14 @@ object Give {
         id: String,
         // 给予数量
         amount: String?,
+        //绑定的玩家
+        bindPlayer: String?,
         // 是否反复随机
         random: String?,
         // 指向数据
-        data: String?
+        data: String?,
     ) {
-        giveCommand(sender, player, id, amount?.toIntOrNull(), random, data)
+        giveCommand(sender, player, id, amount?.toIntOrNull(), bindPlayer, random, data)
     }
 
     private fun giveCommandAsync(
@@ -184,10 +238,11 @@ object Give {
         id: String,
         amount: String? = null,
         random: String? = null,
-        data: String? = null
+        data: String? = null,
+        bindPlayer: String? = null
     ) {
         submit(async = true) {
-            giveCommand(sender, player, id, amount, random, data)
+            giveCommand(sender, player, id, amount, bindPlayer, random, data)
         }
     }
 
@@ -196,11 +251,12 @@ object Give {
         id: String,
         amount: String? = null,
         random: String? = null,
-        data: String? = null
+        data: String? = null,
+        bindPlayer: String? = null
     ) {
         submit(async = true) {
             Bukkit.getOnlinePlayers().forEach { player ->
-                giveCommand(sender, player, id, amount, random, data)
+                giveCommand(sender, player, id, amount, bindPlayer, random, data)
             }
         }
     }
@@ -210,8 +266,9 @@ object Give {
         player: Player?,
         id: String,
         amount: Int?,
+        bindPlayer: String?,
         random: String?,
-        data: String?
+        data: String?,
     ) {
         player?.let {
             when (random) {
@@ -230,6 +287,14 @@ object Give {
                                     itemTag.saveTo(itemStack)
                                 }
                             }
+                            if (bindPlayer != null && bindPlayer != ".") {
+                                val i = ItemBindApi.itemIsBind(itemStack)
+                                if (i != -1) {
+                                    ItemBindApi.addBind(itemStack, i, bindPlayer)
+                                } else {
+                                    ItemBindApi.addBind(itemStack, bindPlayer)
+                                }
+                            }
                             // 物品给予事件
                             val event = ItemGiveEvent(id, player, itemStack, amount.coerceAtLeast(1))
                             event.call()
@@ -237,26 +302,33 @@ object Give {
                             NeigeItems.bukkitScheduler.callSyncMethod(NeigeItems.plugin) {
                                 player.giveItems(event.itemStack, event.amount)
                             }
-                            sender.sendLang("Messages.successInfo", mapOf(
-                                Pair("{player}", player.name),
-                                Pair("{amount}", amount.toString()),
-                                Pair("{name}", itemStack.getParsedName())
-                            ))
-                            player.sendLang("Messages.givenInfo", mapOf(
-                                Pair("{amount}", amount.toString()),
-                                Pair("{name}", itemStack.getParsedName())
-                            ))
+                            sender.sendLang(
+                                "Messages.successInfo", mapOf(
+                                    Pair("{player}", player.name),
+                                    Pair("{amount}", amount.toString()),
+                                    Pair("{name}", itemStack.getParsedName())
+                                )
+                            )
+                            player.sendLang(
+                                "Messages.givenInfo", mapOf(
+                                    Pair("{amount}", amount.toString()),
+                                    Pair("{name}", itemStack.getParsedName())
+                                )
+                            )
                             // 未知物品ID
                         } ?: let {
-                            sender.sendLang("Messages.unknownItem", mapOf(
-                                Pair("{itemID}", id)
-                            ))
+                            sender.sendLang(
+                                "Messages.unknownItem", mapOf(
+                                    Pair("{itemID}", id)
+                                )
+                            )
                         }
                         // 无效数字
                     } ?: let {
                         sender.sendLang("Messages.invalidAmount")
                     }
                 }
+
                 else -> {
                     // 获取数量
                     amount?.let {
@@ -264,7 +336,7 @@ object Give {
                         // 给物品
                         if (ItemManager.hasItem(id)) {
                             repeat(amount.coerceAtLeast(1)) {
-                                ItemManager.getItemStack(id, player, data)?.let letItem@ { itemStack ->
+                                ItemManager.getItemStack(id, player, data)?.let letItem@{ itemStack ->
                                     // 移除一下物品拥有者信息
                                     // 我知道这种操作有些sb, 但是暂时别无他法
                                     if (ConfigManager.removeNBTWhenGive) {
@@ -275,6 +347,14 @@ object Give {
                                             itemTag.saveTo(itemStack)
                                         }
                                     }
+                                    if (bindPlayer != null && bindPlayer != ".") {
+                                        val i = ItemBindApi.itemIsBind(itemStack)
+                                        if (i != -1) {
+                                            ItemBindApi.addBind(itemStack, i, bindPlayer)
+                                        } else {
+                                            ItemBindApi.addBind(itemStack, bindPlayer)
+                                        }
+                                    }
                                     // 物品给予事件
                                     val event = ItemGiveEvent(id, player, itemStack, 1)
                                     event.call()
@@ -282,25 +362,33 @@ object Give {
                                     NeigeItems.bukkitScheduler.callSyncMethod(NeigeItems.plugin) {
                                         player.giveItems(event.itemStack, event.amount)
                                     }
-                                    dropData[event.itemStack.getParsedName()] = dropData[event.itemStack.getParsedName()]?.let { it + event.amount } ?: event.amount
+                                    dropData[event.itemStack.getParsedName()] =
+                                        dropData[event.itemStack.getParsedName()]?.let { it + event.amount }
+                                            ?: event.amount
                                     // 未知物品ID
                                 }
                             }
                         } else {
-                            sender.sendLang("Messages.unknownItem", mapOf(
-                                Pair("{itemID}", id)
-                            ))
+                            sender.sendLang(
+                                "Messages.unknownItem", mapOf(
+                                    Pair("{itemID}", id)
+                                )
+                            )
                         }
                         for ((name, amt) in dropData) {
-                            sender.sendLang("Messages.successInfo", mapOf(
-                                Pair("{player}", player.name),
-                                Pair("{amount}", amt.toString()),
-                                Pair("{name}", name)
-                            ))
-                            player.sendLang("Messages.givenInfo", mapOf(
-                                Pair("{amount}", amt.toString()),
-                                Pair("{name}", name)
-                            ))
+                            sender.sendLang(
+                                "Messages.successInfo", mapOf(
+                                    Pair("{player}", player.name),
+                                    Pair("{amount}", amt.toString()),
+                                    Pair("{name}", name)
+                                )
+                            )
+                            player.sendLang(
+                                "Messages.givenInfo", mapOf(
+                                    Pair("{amount}", amt.toString()),
+                                    Pair("{name}", name)
+                                )
+                            )
                         }
                         // 无效数字
                     } ?: let {
