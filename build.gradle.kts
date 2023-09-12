@@ -20,6 +20,7 @@ taboolib {
             name("PlaceholderAPI").with("bukkit").optional(true)
             name("MythicMobs").with("bukkit").optional(true)
             name("Vault").with("bukkit").optional(true)
+            name("ItemBind").with("bukkit").optional(true)
         }
     }
     install(
@@ -46,6 +47,10 @@ repositories {
     maven("https://jitpack.io")
     // taboo的仓库有时候github自动构建连不上, 丢到最后防止自动构建发生意外
     maven("https://repo.tabooproject.org/storages/public/releases")
+    maven {
+        isAllowInsecureProtocol = true
+        setUrl("http://maven.wcpe.top/repository/maven-public/")
+    }
 }
 
 configurations{
@@ -63,6 +68,8 @@ dependencies {
     compileOnly("com.comphenix.protocol:ProtocolLib:4.8.0")
     compileOnly("me.clip:placeholderapi:2.10.9")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
+
+    compileOnly("top.wcpe:itembind:1.0.4")
 //    compileOnly("org.ow2.asm:asm:9.4")
     taboo(fileTree("libs/javassist.jar"))
     "packShadow"(kotlin("stdlib"))
