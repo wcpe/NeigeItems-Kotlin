@@ -81,7 +81,7 @@ repositories {
         isAllowInsecureProtocol = true
     }
     maven("https://repo.tabooproject.org/storages/public/releases")
-    maven("http://maven.wcpe.top/repository/maven-public/")
+    maven("https://maven.wcpe.top/repository/maven-public/")
 }
 
 dependencies {
