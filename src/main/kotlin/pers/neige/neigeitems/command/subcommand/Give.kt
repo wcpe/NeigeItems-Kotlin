@@ -15,6 +15,7 @@ import pers.neige.neigeitems.utils.PlayerUtils.giveItems
 import pers.neige.neigeitems.utils.SchedulerUtils.async
 import pers.neige.neigeitems.utils.SchedulerUtils.sync
 import taboolib.common.platform.command.subCommand
+import top.wcpe.itembind.ItemBindApi
 
 object Give {
     // ni get [物品ID] (数量) (是否反复随机) (指向数据) > 根据ID获取NI物品
@@ -129,7 +130,7 @@ object Give {
         }
     }
 
-    // ni give [玩家ID] [物品ID] (数量) (是否反复随机) (指向数据) > 根据ID给予NI物品
+    // ni give [玩家ID] [物品ID] (数量) (是否反复随机) (指向数据) (绑定玩家) > 根据ID给予NI物品
     val give = subCommand {
         execute<CommandSender> { sender, _, _ ->
             async {
@@ -166,34 +167,49 @@ object Give {
                             argument
                         )
                     }
-                    // ni give [玩家ID] [物品ID] (数量) (是否反复随机)
+
+                    // ni give [玩家ID] [物品ID] (数量) (是否绑定)
                     dynamic(optional = true) {
                         suggestion<CommandSender>(uncheck = true) { _, _ ->
-                            arrayListOf("true", "false")
+                            Bukkit.getOnlinePlayers().map { it.name }.toMutableList().apply { add(".") }
                         }
                         execute<CommandSender> { sender, context, argument ->
                             giveCommandAsync(
-                                sender,
-                                Bukkit.getPlayerExact(context.argument(-3)),
-                                context.argument(-2),
-                                context.argument(-1),
-                                argument
+                                sender = sender,
+                                player = Bukkit.getPlayerExact(context.argument(-3)),
+                                id = context.argument(-2),
+                                amount = context.argument(-1),
+                                bindPlayer = argument
                             )
                         }
-                        // ni give [玩家ID] [物品ID] (数量) (是否反复随机) (指向数据)
                         dynamic(optional = true) {
                             suggestion<CommandSender>(uncheck = true) { _, _ ->
-                                arrayListOf("data")
+                                arrayListOf("true", "false")
                             }
                             execute<CommandSender> { sender, context, argument ->
                                 giveCommandAsync(
                                     sender,
-                                    Bukkit.getPlayerExact(context.argument(-4)),
-                                    context.argument(-3),
+                                    Bukkit.getPlayerExact(context.argument(-3)),
                                     context.argument(-2),
                                     context.argument(-1),
                                     argument
                                 )
+                            }
+                            // ni give [玩家ID] [物品ID] (数量) (是否绑定) (是否反复随机) (指向数据)
+                            dynamic(optional = true) {
+                                suggestion<CommandSender>(uncheck = true) { _, _ ->
+                                    arrayListOf("data")
+                                }
+                                execute<CommandSender> { sender, context, argument ->
+                                    giveCommandAsync(
+                                        sender,
+                                        Bukkit.getPlayerExact(context.argument(-4)),
+                                        context.argument(-3),
+                                        context.argument(-2),
+                                        context.argument(-1),
+                                        argument
+                                    )
+                                }
                             }
                         }
                     }
@@ -390,6 +406,8 @@ object Give {
         id: String,
         // 给予数量
         amount: String?,
+        //绑定的玩家
+        bindPlayer: String?,
         // 是否反复随机
         random: String?,
         // 指向数据
@@ -397,7 +415,7 @@ object Give {
         // 是否进行消息提示
         tip: Boolean
     ) {
-        giveCommand(sender, player, id, amount?.toIntOrNull(), random, data, tip)
+        giveCommand(sender, player, id, amount?.toIntOrNull(), bindPlayer, random, data, tip)
     }
 
     private fun giveCommandAsync(
@@ -407,10 +425,11 @@ object Give {
         amount: String? = null,
         random: String? = null,
         data: String? = null,
+        bindPlayer: String? = null,
         tip: Boolean = true
     ) {
         async {
-            giveCommand(sender, player, id, amount, random, data, tip)
+            giveCommand(sender, player, id, amount, random, data, bindPlayer, tip)
         }
     }
 
@@ -420,11 +439,12 @@ object Give {
         amount: String? = null,
         random: String? = null,
         data: String? = null,
+        bindPlayer: String? = null,
         tip: Boolean = true
     ) {
         async {
             Bukkit.getOnlinePlayers().forEach { player ->
-                giveCommand(sender, player, id, amount, random, data, tip)
+                giveCommand(sender, player, id, amount, bindPlayer, random, data, tip)
             }
         }
     }
@@ -434,6 +454,7 @@ object Give {
         player: Player?,
         id: String,
         amount: Int?,
+        bindPlayer: String?,
         random: String?,
         data: String?,
         tip: Boolean
@@ -451,6 +472,14 @@ object Give {
                                 if (nbt != null) {
                                     nbt.getCompound("NeigeItems")?.remove("owner")
                                     nbt.saveToSafe(itemStack)
+                                }
+                            }
+                            if (bindPlayer != null && bindPlayer != ".") {
+                                val i = ItemBindApi.itemIsBind(itemStack)
+                                if (i != -1) {
+                                    ItemBindApi.addBind(itemStack, i, bindPlayer)
+                                } else {
+                                    ItemBindApi.addBind(itemStack, bindPlayer)
                                 }
                             }
                             // 物品给予事件
@@ -488,6 +517,7 @@ object Give {
                         sender.sendLang("Messages.invalidAmount")
                     }
                 }
+
                 else -> {
                     // 获取数量
                     amount?.let {
@@ -502,6 +532,14 @@ object Give {
                                         if (nbt != null) {
                                             nbt.getCompound("NeigeItems")?.remove("owner")
                                             nbt.saveToSafe(itemStack)
+                                        }
+                                    }
+                                    if (bindPlayer != null && bindPlayer != ".") {
+                                        val i = ItemBindApi.itemIsBind(itemStack)
+                                        if (i != -1) {
+                                            ItemBindApi.addBind(itemStack, i, bindPlayer)
+                                        } else {
+                                            ItemBindApi.addBind(itemStack, bindPlayer)
                                         }
                                     }
                                     // 物品给予事件
