@@ -1,3 +1,9 @@
+mail-format:
+  sender: "[系统]"
+  title: "[系统] %player% 这是您遗弃的物品"
+  message: "%player% 请及时领取"
+send-mail-tip: "您的物品已经发送至邮件!"
+
 Language: zh_cn
 Main:
   MMItemsPath: MMItems.yml

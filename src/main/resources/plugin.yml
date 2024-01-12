@@ -10,5 +10,7 @@ softdepend:
   - 'PlaceholderAPI'
   - 'MythicMobs'
   - 'Vault'
+  - 'ItemBind'
+  - 'MailBox'
 
 api-version: 1.13

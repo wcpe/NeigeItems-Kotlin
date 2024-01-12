@@ -19,9 +19,6 @@ plugins {
 
 val realVersion = version
 
-if (!System.getenv("CI").toBoolean()) {
-    version = "dev"
-}
 
 subprojects {
     apply<JavaPlugin>()
@@ -93,6 +90,7 @@ dependencies {
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     compileOnly("org.ow2.asm:asm:9.4")
     compileOnly("top.wcpe:itembind:1.0.4")
+    compileOnly("top.wcpe:mailbox:1.8.0")
 //    compileOnly("net.Indyuce:MMOItems-API:6.9.5-SNAPSHOT")
 //    compileOnly("io.lumine:MythicLib-dist:1.6.2-SNAPSHOT")
 

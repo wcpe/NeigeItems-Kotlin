@@ -3,17 +3,29 @@ package pers.neige.neigeitems.utils
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.ComponentBuilder
 import net.md_5.bungee.api.chat.TextComponent
+import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.World
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.metadata.FixedMetadataValue
 import org.bukkit.metadata.Metadatable
 import pers.neige.neigeitems.NeigeItems.plugin
+import top.wcpe.neigeitems.hook.MailBoxProxy
 
 /**
  * 玩家相关工具类
  */
 object PlayerUtils {
+    private fun dropItemStack(player: Player, world: World, location: Location, itemStack: ItemStack) {
+        val flag = MailBoxProxy.sendMailBox(player.name, itemStack)
+        if (flag) {
+            player.sendMessage(plugin.config.getString("send-mail-tip") ?: "")
+        } else {
+            world.dropItem(location, itemStack)
+        }
+    }
+
     /**
      * 给予玩家物品
      * @param itemStack 待给予物品
@@ -21,7 +33,9 @@ object PlayerUtils {
     @JvmStatic
     fun Player.giveItem(itemStack: ItemStack) {
         if (itemStack.type != Material.AIR) {
-            inventory.addItem(itemStack).values.forEach { world.dropItem(location, it) }
+            inventory.addItem(itemStack).values.forEach {
+                dropItemStack(this, world, location, it)
+            }
         }
     }
 
@@ -36,7 +50,9 @@ object PlayerUtils {
             // CraftInventory.addItem 的执行过程中, 实质上有可能修改ItemStack的amount, 如果不注意这一点, 则会吞物品而不自知
             val preAmount = itemStack.amount
             repeat(repeat) {
-                inventory.addItem(itemStack).values.forEach { world.dropItem(location, it) }
+                inventory.addItem(itemStack).values.forEach {
+                    dropItemStack(this, world, location, it)
+                }
                 itemStack.amount = preAmount
             }
         }
@@ -60,13 +76,13 @@ object PlayerUtils {
         if (repeat > 0) {
             repeat(repeat) {
                 itemStack.amount = maxStackSize
-                inventory.addItem(itemStack).values.forEach { world.dropItem(location, it) }
+                inventory.addItem(itemStack).values.forEach { dropItemStack(this, world, location, it) }
             }
         }
         // 单独给予
         if (leftAmount > 0) {
             itemStack.amount = leftAmount
-            inventory.addItem(itemStack).values.forEach { world.dropItem(location, it) }
+            inventory.addItem(itemStack).values.forEach { dropItemStack(this, world, location, it) }
         }
         itemStack.amount = preAmount
     }
