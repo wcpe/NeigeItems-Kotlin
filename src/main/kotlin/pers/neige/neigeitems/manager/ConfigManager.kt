@@ -1,7 +1,5 @@
 package pers.neige.neigeitems.manager
 
-import org.bstats.bukkit.Metrics
-import org.bstats.charts.SingleLineChart
 import org.bukkit.Bukkit
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.FileConfiguration
@@ -66,9 +64,6 @@ object ConfigManager {
             plugin.saveResourceNotWarn("Scripts${File.separator}ItemTime.js")
         }
         plugin.saveDefaultConfig()
-        // 加载bstats
-        val metrics = Metrics(plugin, 15750)
-        metrics.addCustomChart(SingleLineChart("items") { ItemManager.itemIds.size })
         // 对当前Config查缺补漏
         loadConfig()
     }

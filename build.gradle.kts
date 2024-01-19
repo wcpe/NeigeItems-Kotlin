@@ -105,8 +105,7 @@ dependencies {
     implementation("io.izzel.taboolib:module-metrics:$taboolib_version")
     implementation("io.izzel.taboolib:platform-bukkit:$taboolib_version")
 
-    // bstats
-    implementation("org.bstats:bstats-bukkit:3.0.2")
+
     // kotlin
     implementation(kotlin("stdlib"))
     // javassist
